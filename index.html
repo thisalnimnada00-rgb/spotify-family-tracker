@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Family • Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+        
+        :root {
+            --primary: 234 179 8;
+        }
+        
+        body {
+            font-family: 'Inter', system_ui, sans-serif;
+        }
+        
+        .title-font {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .payment-cell {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .payment-cell.paid {
+            background-color: rgb(234 179 8 / 0.15);
+            color: rgb(234 179 8);
+        }
+        
+        .table-header {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            height: 140px;
+        }
+    </style>
+</head>
+<body class="bg-zinc-950 text-zinc-200 min-h-screen">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="border-b border-zinc-800 bg-zinc-900 sticky top-0 z-50">
+            <div class="px-8 py-6 flex items-center justify-between">
+                <div class="flex items-center gap-x-4">
+                    <div class="w-10 h-10 bg-yellow-500 rounded-2xl flex items-center justify-center text-black font-bold text-2xl">♪</div>
+                    <div>
+                        <h1 class="title-font text-3xl font-semibold tracking-tight">Spotify Family</h1>
+                        <p class="text-zinc-400 text-sm">Subscription Tracker</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-x-8">
+                    <div id="renewal-info" class="text-right">
+                        <p class="text-xs text-zinc-500 uppercase tracking-widest">Next Renewal</p>
+                        <p id="renewal-date" class="font-medium text-lg">July 10, 2026</p>
+                    </div>
+                    
+                    <button onclick="addNewMonth()" 
+                            class="flex items-center gap-x-2 bg-zinc-800 hover:bg-zinc-700 px-5 py-2.5 rounded-2xl text-sm font-medium transition-colors">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>New Month</span>
+                    </button>
+                    
+                    <div class="flex items-center gap-x-2 bg-emerald-500/10 text-emerald-400 px-4 py-2 rounded-3xl text-sm font-medium">
+                        <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                        ACTIVE
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex">
+            <!-- Sidebar -->
+            <div class="w-72 bg-zinc-900 border-r border-zinc-800 min-h-[calc(100vh-78px)] p-6">
+                <div class="mb-8">
+                    <h2 class="uppercase text-xs tracking-widest text-zinc-500 mb-3">This Month</h2>
+                    <div id="current-month-stats" class="space-y-4">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div class="mb-8">
+                    <h2 class="uppercase text-xs tracking-widest text-zinc-500 mb-3">Members</h2>
+                    <div id="member-list" class="space-y-2">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div class="mt-auto pt-8 border-t border-zinc-800">
+                    <button onclick="resetAllData()" 
+                            class="w-full text-red-400 hover:text-red-300 text-sm flex items-center justify-center gap-x-2 py-3 hover:bg-zinc-950 rounded-2xl transition-colors">
+                        <i class="fa-solid fa-trash"></i>
+                        <span>Clear All Data</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="flex-1 p-8">
+                <div class="mb-6 flex items-end justify-between">
+                    <div>
+                        <h2 class="text-2xl font-semibold">Payment History</h2>
+                        <p class="text-zinc-400">Mark payments • Track contributions</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-zinc-400">Total Collected</div>
+                        <div id="total-collected" class="text-3xl font-semibold text-yellow-400">₹0</div>
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <div class="overflow-x-auto rounded-3xl border border-zinc-800 bg-zinc-900">
+                    <table id="payment-table" class="w-full min-w-[800px]">
+                        <thead>
+                            <tr class="border-b border-zinc-800">
+                                <th class="sticky left-0 bg-zinc-900 z-10 px-6 py-5 text-left font-medium w-56">Member</th>
+                                <!-- Month headers added by JS -->
+                            </tr>
+                        </thead>
+                        <tbody id="table-body" class="text-sm">
+                            <!-- Rows added by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-8 grid grid-cols-3 gap-6">
+                    <!-- Legend -->
+                    <div class="col-span-2 bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
+                        <h3 class="font-medium mb-4 flex items-center gap-x-2">
+                            <i class="fa-solid fa-circle-info"></i>
+                            How to use
+                        </h3>
+                        <div class="grid grid-cols-2 gap-6 text-sm">
+                            <div class="flex gap-x-3">
+                                <div class="w-6 h-6 rounded-xl bg-yellow-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <span class="text-yellow-400 text-xs font-bold">✓</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium">Click cells</div>
+                                    <div class="text-zinc-400">to mark/unmark payment for that month</div>
+                                </div>
+                            </div>
+                            <div class="flex gap-x-3">
+                                <div class="w-6 h-6 rounded-xl bg-zinc-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <i class="fa-solid fa-user text-xs"></i>
+                                </div>
+                                <div>
+                                    <div class="font-medium">Hover members</div>
+                                    <div class="text-zinc-400">to see total paid months</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Summary Card -->
+                    <div class="bg-gradient-to-br from-yellow-500/10 to-transparent border border-yellow-500/30 rounded-3xl p-6">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="uppercase text-xs tracking-widest text-yellow-400">Overall</div>
+                                <div id="total-paid-months" class="text-5xl font-semibold mt-1">0</div>
+                                <div class="text-zinc-400">months paid across all members</div>
+                            </div>
+                            <i class="fa-solid fa-chart-simple text-4xl text-yellow-400/30"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="hidden fixed bottom-6 right-6 bg-zinc-800 border border-zinc-700 text-white px-6 py-4 rounded-3xl flex items-center gap-x-3 shadow-2xl">
+        <i id="toast-icon" class="fa-solid"></i>
+        <span id="toast-message" class="font-medium"></span>
+    </div>
+
+    <script>
+        // Members
+        let members = [
+            { name: "Yashod", color: "bg-blue-500" },
+            { name: "Onitha", color: "bg-purple-500" },
+            { name: "Netharu", color: "bg-pink-500" },
+            { name: "Senija", color: "bg-emerald-500" },
+            { name: "Grinesh", color: "bg-orange-500" }
+        ];
+
+        // Payment data: { memberIndex: { monthIndex: true } }
+        let payments = {};
+        
+        // Months array (e.g. "Jun 2025")
+        let months = [];
+
+        // Default renewal date
+        let renewalDate = "July 10, 2026";
+
+        function generateInitialMonths() {
+            const now = new Date();
+            months = [];
+            for (let i = 0; i < 12; i++) {
+                const d = new Date(now.getFullYear(), now.getMonth() - 3 + i);
+                months.push(d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('spotifyFamilyPayments', JSON.stringify(payments));
+            localStorage.setItem('spotifyFamilyMonths', JSON.stringify(months));
+            localStorage.setItem('spotifyFamilyRenewal', renewalDate);
+        }
+
+        function loadData() {
+            const savedPayments = localStorage.getItem('spotifyFamilyPayments');
+            if (savedPayments) payments = JSON.parse(savedPayments);
+            
+            const savedMonths = localStorage.getItem('spotifyFamilyMonths');
+            if (savedMonths) months = JSON.parse(savedMonths);
+            else generateInitialMonths();
+            
+            const savedRenewal = localStorage.getItem('spotifyFamilyRenewal');
+            if (savedRenewal) renewalDate = savedRenewal;
+            
+            document.getElementById('renewal-date').textContent = renewalDate;
+        }
+
+        function renderTable() {
+            const thead = document.querySelector('#payment-table thead tr');
+            // Clear existing month headers
+            while (thead.children.length > 1) {
+                thead.removeChild(thead.lastChild);
+            }
+
+            months.forEach((month, index) => {
+                const th = document.createElement('th');
+                th.className = 'table-header px-4 py-3 text-xs font-medium text-zinc-400 border-l border-zinc-800 text-center align-bottom';
+                th.style.height = '140px';
+                th.innerHTML = `
+                    <div class="flex flex-col items-center justify-end h-full pb-2">
+                        <span>${month}</span>
+                    </div>
+                `;
+                thead.appendChild(th);
+            });
+
+            // Body
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+
+            members.forEach((member, mIndex) => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-zinc-800 hover:bg-zinc-950 transition-colors';
+                
+                // Name cell
+                let html = `
+                    <td class="sticky left-0 bg-zinc-900 z-10 px-6 py-5 font-medium border-r border-zinc-800">
+                        <div class="flex items-center gap-x-3">
+                            <div class="w-7 h-7 ${member.color} rounded-2xl flex-shrink-0"></div>
+                            <span>${member.name}</span>
+                        </div>
+                    </td>
+                `;
+
+                // Payment cells
+                months.forEach((_, monthIndex) => {
+                    const isPaid = payments[mIndex] && payments[mIndex][monthIndex];
+                    html += `
+                        <td onclick="togglePayment(${mIndex}, ${monthIndex})" 
+                            class="payment-cell px-4 py-8 text-center cursor-pointer border-l border-zinc-800 ${isPaid ? 'paid' : 'hover:bg-zinc-800'}">
+                            ${isPaid ? 
+                                '<i class="fa-solid fa-check text-yellow-400 text-xl"></i>' : 
+                                '<span class="text-zinc-700 text-xs">—</span>'}
+                        </td>
+                    `;
+                });
+
+                row.innerHTML = html;
+                tbody.appendChild(row);
+            });
+        }
+
+        function togglePayment(memberIndex, monthIndex) {
+            if (!payments[memberIndex]) payments[memberIndex] = {};
+            
+            if (payments[memberIndex][monthIndex]) {
+                delete payments[memberIndex][monthIndex];
+            } else {
+                payments[memberIndex][monthIndex] = true;
+            }
+            
+            saveData();
+            renderTable();
+            renderSidebar();
+            showToast('Payment updated', 'fa-check');
+        }
+
+        function renderSidebar() {
+            // Current month stats
+            const currentMonthIndex = months.length - 1;
+            let paidThisMonth = 0;
+            
+            members.forEach((_, i) => {
+                if (payments[i] && payments[i][currentMonthIndex]) paidThisMonth++;
+            });
+
+            document.getElementById('current-month-stats').innerHTML = `
+                <div class="bg-zinc-800 rounded-3xl p-5">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <div class="text-emerald-400 text-sm font-medium">${paidThisMonth}/${members.length} paid</div>
+                            <div class="text-4xl font-semibold mt-1">${Math.round((paidThisMonth / members.length) * 100)}%</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs text-zinc-400">THIS MONTH</div>
+                            <div class="text-xl font-medium text-yellow-400">${months[months.length-1]}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Member list with totals
+            let memberHTML = '';
+            members.forEach((member, i) => {
+                const paidCount = payments[i] ? Object.keys(payments[i]).length : 0;
+                memberHTML += `
+                    <div class="flex items-center justify-between bg-zinc-800/70 hover:bg-zinc-800 px-4 py-3 rounded-2xl group">
+                        <div class="flex items-center gap-x-3">
+                            <div class="w-6 h-6 ${member.color} rounded-xl"></div>
+                            <span class="font-medium">${member.name}</span>
+                        </div>
+                        <div class="text-yellow-400 font-mono text-sm">${paidCount} mo</div>
+                    </div>
+                `;
+            });
+            document.getElementById('member-list').innerHTML = memberHTML;
+
+            // Totals
+            let totalPaidMonths = 0;
+            Object.values(payments).forEach(memberPayments => {
+                totalPaidMonths += Object.keys(memberPayments).length;
+            });
+            
+            document.getElementById('total-paid-months').textContent = totalPaidMonths;
+            
+            // Assume ₹199 per person per month
+            const totalCollected = totalPaidMonths * 199;
+            document.getElementById('total-collected').textContent = `₹${totalCollected}`;
+        }
+
+        function addNewMonth() {
+            const lastMonth = months[months.length - 1];
+            const date = new Date(lastMonth + " 1");
+            date.setMonth(date.getMonth() + 1);
+            const newMonthStr = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+            
+            months.push(newMonthStr);
+            saveData();
+            renderTable();
+            renderSidebar();
+            showToast(`Added ${newMonthStr}`, 'fa-calendar-plus');
+        }
+
+        function showToast(message, icon) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = message;
+            document.getElementById('toast-icon').className = `fa-solid ${icon} text-yellow-400`;
+            toast.classList.remove('hidden');
+            toast.style.transform = 'translateY(0)';
+            
+            setTimeout(() => {
+                toast.style.transform = 'translateY(100px)';
+                setTimeout(() => {
+                    toast.classList.add('hidden');
+                }, 300);
+            }, 2500);
+        }
+
+        function resetAllData() {
+            if (confirm("Clear ALL payment data? This cannot be undone.")) {
+                payments = {};
+                saveData();
+                renderTable();
+                renderSidebar();
+                showToast('All data cleared', 'fa-trash');
+            }
+        }
+
+        // Initialize
+        function init() {
+            loadData();
+            renderTable();
+            renderSidebar();
+            
+            // Demo data for first time users
+            if (Object.keys(payments).length === 0) {
+                // Give some example payments
+                payments[0] = {0: true, 1: true, 2: true, 3: true};
+                payments[1] = {0: true, 1: true};
+                payments[2] = {0: true, 1: true, 2: true};
+                payments[3] = {0: true};
+                payments[4] = {0: true, 1: true, 2: true, 3: true};
+                saveData();
+                renderTable();
+                renderSidebar();
+            }
+            
+            console.log('%cSpotify Family Tracker ready!', 'color:#eab308; font-family:monospace');
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
